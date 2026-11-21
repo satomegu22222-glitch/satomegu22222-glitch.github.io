@@ -1115,6 +1115,58 @@
           toast("控えを書き出しました");
         });
 
+        function isSameVisit(a, b) {
+          return a.date === b.date &&
+            (a.party || 0) === (b.party || 0) &&
+            (a.shots || 0) === (b.shots || 0) &&
+            (a.partyPts || 0) === (b.partyPts || 0) &&
+            (a.shotPts || 0) === (b.shotPts || 0);
+        }
+        function mergeCustomers(incoming) {
+          incoming.forEach(function (inc) {
+            var incName = (inc.name || "").trim();
+            var existing = null;
+            for (var i = 0; i < customers.length; i++) {
+              if ((customers[i].name || "").trim() === incName) { existing = customers[i]; break; }
+            }
+            if (!existing) {
+              var idTaken = customers.some(function (c) { return c.id === inc.id; });
+              if (!inc.id || idTaken) inc.id = "c" + Date.now() + Math.floor(Math.random() * 100000);
+              customers.push(inc);
+              return;
+            }
+            var visits = (existing.visits || []).map(function (v) {
+              return { date: v.date, party: v.party || 0, shots: v.shots || 0, partyPts: v.partyPts || 0, shotPts: v.shotPts || 0 };
+            });
+            (inc.visits || []).forEach(function (v) {
+              var dup = visits.some(function (ev) { return isSameVisit(ev, v); });
+              if (dup) return;
+              var sameDate = null;
+              visits.forEach(function (ev) { if (ev.date === v.date) sameDate = ev; });
+              if (sameDate) {
+                sameDate.party = (sameDate.party || 0) + (v.party || 0);
+                sameDate.shots = (sameDate.shots || 0) + (v.shots || 0);
+                sameDate.partyPts = (sameDate.partyPts || 0) + (v.partyPts || 0);
+                sameDate.shotPts = (sameDate.shotPts || 0) + (v.shotPts || 0);
+              } else {
+                visits.push({ date: v.date, party: v.party || 0, shots: v.shots || 0, partyPts: v.partyPts || 0, shotPts: v.shotPts || 0 });
+              }
+            });
+            visits.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+            existing.visits = visits;
+            var lastCandidates = [];
+            if (existing.lastDate) lastCandidates.push(existing.lastDate);
+            if (inc.lastDate) lastCandidates.push(inc.lastDate);
+            visits.forEach(function (v) { if (v.date) lastCandidates.push(v.date); });
+            lastCandidates.sort();
+            if (lastCandidates.length) existing.lastDate = lastCandidates[lastCandidates.length - 1];
+            if (!(existing.feature || "").trim() && (inc.feature || "").trim()) existing.feature = inc.feature;
+            if (!(existing.memo || "").trim() && (inc.memo || "").trim()) existing.memo = inc.memo;
+            existing.regular = !!(existing.regular || inc.regular);
+            existing.updatedAt = Date.now();
+          });
+        }
+
         $("btn-import").addEventListener("click", function () { $("file-import").click(); });
         $("file-import").addEventListener("change", function () {
           var file = $("file-import").files[0];
@@ -1133,9 +1185,9 @@
               });
             if (clean.length === 0) { toast("読み込めるお客様がいませんでした"); return; }
             showModal("控えを読み込みますか？",
-              "今のメモ " + customers.length + "人分を、控えの " + clean.length + "人分で置きかえます。",
-              "読み込む", false, function () {
-                customers = clean;
+              "今のメモ " + customers.length + "人分に、控えの " + clean.length + "人分を足します。同じ名前のお客様は1人に合体し、今のメモは消えません。",
+              "足して読み込む", false, function () {
+                mergeCustomers(clean);
                 save(); render();
                 toast("読み込みました（" + clean.length + "人）");
               });
