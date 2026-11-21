@@ -120,6 +120,26 @@
         font-size: 15px; font-weight: 800; margin: 2px 0 12px;
         background: var(--surface-2); border-radius: 10px; padding: 8px 12px;
       }
+      .day-summary .ds-cell small.ds-yen { color: var(--accent); font-weight: 800; font-size: 14px; }
+
+      /* ---------- レート表 ---------- */
+      .rate-box {
+        background: var(--surface); border: 1.5px solid var(--line);
+        border-radius: 14px; box-shadow: var(--shadow);
+        padding: 14px 16px 10px; margin-top: 14px;
+      }
+      .rate-title { font-weight: 800; font-size: 17px; margin: 0 0 6px; }
+      .rate-row {
+        display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+        padding: 7px 0; border-bottom: 1px dashed var(--line);
+        font-size: 18px;
+      }
+      .rate-name { font-weight: 800; white-space: nowrap; }
+      .rate-val { text-align: right; }
+      .rate-val b { font-size: 21px; font-weight: 800; }
+      .rate-yen { font-weight: 800; color: var(--accent); white-space: nowrap; }
+      .rate-note { font-size: 16px; font-weight: 700; margin: 10px 0 2px; }
+      .rate-note.mic { color: var(--ink-soft); font-size: 15px; margin-top: 2px; }
 
       /* ---------- cards ---------- */
       .card {
@@ -310,6 +330,15 @@
           <button class="add-btn" id="btn-add" type="button">＋ 追加</button>
         </div>
 
+        <div class="rate-box" aria-label="ポイントのレート">
+          <p class="rate-title">ポイントのレート</p>
+          <div class="rate-row"><span class="rate-name">パーティ</span><span class="rate-val">1分 <b>100P</b> ＝ <span class="rate-yen">30円</span></span></div>
+          <div class="rate-row"><span class="rate-name">2ショット</span><span class="rate-val">1分 <b>150P</b> ＝ <span class="rate-yen">45円</span></span></div>
+          <div class="rate-row"><span class="rate-name">メッセージ</span><span class="rate-val">1通 <b>200P</b> ＝ <span class="rate-yen">60円</span></span></div>
+          <p class="rate-note">換算：100P ＝ 30円（1P ＝ 0.3円）</p>
+          <p class="rate-note mic">つながったらマイクON</p>
+        </div>
+
         <div class="filter-row" role="group" aria-label="絞り込み">
           <button class="chip" id="chip-all" type="button" aria-pressed="true">すべて</button>
           <button class="chip" id="chip-regular" type="button" aria-pressed="false">常連さんだけ</button>
@@ -327,9 +356,9 @@
         <div class="day-summary" id="day-summary" hidden>
           <p class="ds-title" id="ds-title">今日の合計</p>
           <div class="ds-rows">
-            <div class="ds-cell"><span>パーティ</span><b id="ds-party">0 P</b><small id="ds-party-count">0回</small></div>
-            <div class="ds-cell"><span>2ショット</span><b id="ds-shot">0 P</b><small id="ds-shot-count">0回</small></div>
-            <div class="ds-cell"><span>全員合計</span><b id="ds-total">0 P</b><small>今日の分</small></div>
+            <div class="ds-cell"><span>パーティ</span><b id="ds-party">0 P</b><small id="ds-party-count">0回</small><small class="ds-yen" id="ds-party-yen"></small></div>
+            <div class="ds-cell"><span>2ショット</span><b id="ds-shot">0 P</b><small id="ds-shot-count">0回</small><small class="ds-yen" id="ds-shot-yen"></small></div>
+            <div class="ds-cell"><span>全員合計</span><b id="ds-total">0 P</b><small>今日の分</small><small class="ds-yen" id="ds-total-yen"></small></div>
           </div>
         </div>
 
@@ -537,6 +566,16 @@
           return { party: p, shots: s, partyPts: pp, shotPts: sp, points: pp + sp };
         }
         function visitPoints(v) { return (v.partyPts || 0) + (v.shotPts || 0); }
+        /* レート換算：1P ＝ 0.3円（小数点以下は切り捨て） */
+        function yenOf(p) { return Math.floor((p || 0) * 0.3); }
+        function ptsText(p) {
+          var s = (p || 0).toLocaleString("ja-JP") + " P";
+          if (p > 0) s += "（約" + yenOf(p).toLocaleString("ja-JP") + "円）";
+          return s;
+        }
+        function yenText(p) {
+          return p > 0 ? "約" + yenOf(p).toLocaleString("ja-JP") + "円" : "";
+        }
         function dayTotals(date) {
           var p = 0, s = 0, pp = 0, sp = 0;
           customers.forEach(function (c) {
@@ -676,9 +715,12 @@
             $("ds-title").textContent = "今日（" + fmtDate(todayStr()) + "）の合計";
             $("ds-party").textContent = dt.partyPts.toLocaleString("ja-JP") + " P";
             $("ds-party-count").textContent = dt.party + "回";
+            $("ds-party-yen").textContent = yenText(dt.partyPts);
             $("ds-shot").textContent = dt.shotPts.toLocaleString("ja-JP") + " P";
             $("ds-shot-count").textContent = dt.shots + "回";
+            $("ds-shot-yen").textContent = yenText(dt.shotPts);
             $("ds-total").textContent = dt.points.toLocaleString("ja-JP") + " P";
+            $("ds-total-yen").textContent = yenText(dt.points);
           } else {
             ds.hidden = true;
           }
@@ -729,7 +771,7 @@
             meta.appendChild(m3);
             var m4 = makeEl("span");
             m4.appendChild(document.createTextNode("累計ポイント："));
-            m4.appendChild(makeEl("b", null, tt.points.toLocaleString("ja-JP") + " P"));
+            m4.appendChild(makeEl("b", null, ptsText(tt.points)));
             meta.appendChild(m4);
             card.appendChild(meta);
 
@@ -738,7 +780,7 @@
             if (todayVisit) {
               var tl = makeEl("div", "card-today");
               tl.appendChild(document.createTextNode("今日：パーティ " + todayVisit.party + "回・" + (todayVisit.partyPts || 0).toLocaleString("ja-JP") + "P ／ 2ショット " + todayVisit.shots + "回・" + (todayVisit.shotPts || 0).toLocaleString("ja-JP") + "P ／ 合計 "));
-              tl.appendChild(makeEl("b", null, visitPoints(todayVisit).toLocaleString("ja-JP") + " P"));
+              tl.appendChild(makeEl("b", null, ptsText(visitPoints(todayVisit))));
               card.appendChild(tl);
             }
 
@@ -818,7 +860,7 @@
 
         function updateDayTotal() {
           var pp = numVal("f-party-pts"), sp = numVal("f-shot-pts");
-          $("day-total-line").textContent = "この日の合計：パーティ " + pp.toLocaleString("ja-JP") + "P ＋ 2ショット " + sp.toLocaleString("ja-JP") + "P ＝ " + (pp + sp).toLocaleString("ja-JP") + " P";
+          $("day-total-line").textContent = "この日の合計：パーティ " + pp.toLocaleString("ja-JP") + "P ＋ 2ショット " + sp.toLocaleString("ja-JP") + "P ＝ " + ptsText(pp + sp);
         }
         ["f-party-pts", "f-shot-pts"].forEach(function (id) {
           $(id).addEventListener("input", updateDayTotal);
@@ -853,7 +895,7 @@
           var ft = formTotals();
           $("tot-party").textContent = ft.party + "回";
           $("tot-shots").textContent = ft.shots + "回";
-          $("tot-points").textContent = ft.points.toLocaleString("ja-JP") + " P";
+          $("tot-points").textContent = ptsText(ft.points);
           if (formVisits.length === 0) {
             box.appendChild(makeEl("p", "hist-empty", "まだ記録がありません。上の「この日の分を記録する」から追加できます。"));
             return;
@@ -871,8 +913,8 @@
             row.appendChild(d);
             row.appendChild(makeEl("div", "hist-nums", "パーティ " + r.v.party + "回 ・ " + (r.v.partyPts || 0).toLocaleString("ja-JP") + "P"));
             row.appendChild(makeEl("div", "hist-nums", "2ショット " + r.v.shots + "回 ・ " + (r.v.shotPts || 0).toLocaleString("ja-JP") + "P"));
-            row.appendChild(makeEl("div", "hist-nums", "この日の合計：" + visitPoints(r.v).toLocaleString("ja-JP") + " P"));
-            row.appendChild(makeEl("div", "hist-cum", "この日までの合計：パーティ " + r.cumP + "回 ・ 2ショット " + r.cumS + "回 ・ " + r.cumPts.toLocaleString("ja-JP") + " P"));
+            row.appendChild(makeEl("div", "hist-nums", "この日の合計：" + ptsText(visitPoints(r.v))));
+            row.appendChild(makeEl("div", "hist-cum", "この日までの合計：パーティ " + r.cumP + "回 ・ 2ショット " + r.cumS + "回 ・ " + ptsText(r.cumPts)));
             var btns = makeEl("div", "hist-btns");
             var bEditDay = makeEl("button", "mini-btn", "この日を直す");
             bEditDay.type = "button";
