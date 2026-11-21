@@ -1,0 +1,1110 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>お客様メモ</title>
+    <style>
+      :root {
+        --bg: #faf5f2;
+        --surface: #ffffff;
+        --surface-2: #f3e9e4;
+        --ink: #2b2126;
+        --ink-soft: #6f5d66;
+        --line: #e3d3cc;
+        --accent: #a62b4d;
+        --accent-ink: #ffffff;
+        --accent-soft: #f9e3ea;
+        --gold: #9a6a12;
+        --gold-soft: #f7ecd2;
+        --danger: #b3261e;
+        --danger-soft: #fbe7e4;
+        --shadow: 0 1px 3px rgba(80, 40, 55, 0.10), 0 4px 14px rgba(80, 40, 55, 0.06);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #171114;
+          --surface: #241a1f;
+          --surface-2: #2e2128;
+          --ink: #f4e9ec;
+          --ink-soft: #c2a9b2;
+          --line: #453239;
+          --accent: #e2688a;
+          --accent-ink: #241016;
+          --accent-soft: #40222e;
+          --gold: #e5b95c;
+          --gold-soft: #3d3016;
+          --danger: #f0938a;
+          --danger-soft: #40211e;
+          --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 4px 14px rgba(0, 0, 0, 0.3);
+        }
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", "Noto Sans JP", -apple-system, BlinkMacSystemFont, sans-serif;
+        font-size: 17px;
+        line-height: 1.55;
+      }
+      button, input, select, textarea { font: inherit; color: inherit; }
+      button { cursor: pointer; }
+      .wrap { max-width: 640px; margin: 0 auto; padding: 16px 16px 120px; }
+
+      /* ---------- toolbar ---------- */
+      .search-row { display: flex; gap: 10px; align-items: stretch; }
+      .search-box {
+        flex: 1; display: flex; align-items: center; gap: 8px;
+        background: var(--surface); border: 1.5px solid var(--line);
+        border-radius: 12px; padding: 0 14px; min-height: 52px;
+      }
+      .search-box svg { flex: none; color: var(--ink-soft); }
+      .search-box input {
+        flex: 1; min-width: 0; border: 0; background: transparent; outline: none;
+        font-size: 17px; min-height: 48px;
+      }
+      .search-box input::placeholder { color: var(--ink-soft); }
+      .add-btn {
+        flex: none; border: 0; border-radius: 12px; min-height: 52px;
+        padding: 0 18px; background: var(--accent); color: var(--accent-ink);
+        font-weight: 700; font-size: 16px;
+      }
+      .add-btn:active { opacity: 0.85; }
+
+      .filter-row {
+        display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+        margin-top: 14px;
+      }
+      .chip {
+        border: 1.5px solid var(--line); background: var(--surface);
+        border-radius: 999px; min-height: 40px; padding: 6px 16px;
+        font-size: 15px; font-weight: 600; color: var(--ink-soft);
+      }
+      .chip[aria-pressed="true"] {
+        background: var(--accent); border-color: var(--accent); color: var(--accent-ink);
+      }
+      .sort-wrap { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+      .sort-wrap label { font-size: 14px; color: var(--ink-soft); white-space: nowrap; }
+      .sort-wrap select {
+        min-height: 40px; border: 1.5px solid var(--line); border-radius: 10px;
+        background: var(--surface); padding: 4px 8px; font-size: 15px; max-width: 168px;
+      }
+      .count-line { margin: 16px 2px 10px; font-size: 14px; color: var(--ink-soft); }
+
+      /* ---------- 今日の合計 ---------- */
+      .day-summary {
+        background: var(--accent-soft); border-radius: 14px;
+        padding: 14px 16px; margin-top: 14px;
+      }
+      .day-summary .ds-title { font-weight: 800; font-size: 16px; margin: 0 0 8px; }
+      .day-summary .ds-rows { display: flex; gap: 10px; flex-wrap: wrap; }
+      .day-summary .ds-cell {
+        flex: 1 1 30%; background: var(--surface); border-radius: 10px;
+        padding: 8px 12px; display: flex; flex-direction: column; gap: 1px;
+      }
+      .day-summary .ds-cell span { font-size: 13.5px; font-weight: 700; color: var(--ink-soft); }
+      .day-summary .ds-cell b { font-size: 20px; font-weight: 800; }
+      .day-summary .ds-cell small { font-size: 13px; color: var(--ink-soft); font-weight: 600; }
+      .card-today {
+        margin-top: 10px; background: var(--accent-soft); border-radius: 10px;
+        padding: 8px 12px; font-size: 14.5px; font-weight: 700;
+      }
+      .card-today b { font-weight: 800; }
+      .day-count.pts > span { white-space: normal; font-size: 15px; }
+      .day-count.pts .stepper input { width: 104px; }
+      .day-total-line {
+        font-size: 15px; font-weight: 800; margin: 2px 0 12px;
+        background: var(--surface-2); border-radius: 10px; padding: 8px 12px;
+      }
+
+      /* ---------- cards ---------- */
+      .card {
+        background: var(--surface); border: 1px solid var(--line);
+        border-radius: 16px; box-shadow: var(--shadow);
+        padding: 16px; margin-bottom: 12px; text-align: left; width: 100%;
+        display: block;
+      }
+      .card-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+      .card-name { font-size: 20px; font-weight: 800; margin: 0; word-break: break-all; }
+      .badge-regular {
+        background: var(--gold-soft); color: var(--gold);
+        font-size: 13px; font-weight: 800; border-radius: 999px; padding: 3px 10px;
+        white-space: nowrap;
+      }
+      .card-meta {
+        display: flex; gap: 14px; flex-wrap: wrap; margin-top: 8px;
+        font-size: 14.5px; color: var(--ink-soft); font-weight: 600;
+      }
+      .card-meta b { color: var(--ink); font-weight: 800; }
+      .card-text {
+        margin: 10px 0 0; font-size: 15.5px; white-space: pre-wrap; word-break: break-word;
+        display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+      }
+      .card-text .lbl { color: var(--ink-soft); font-size: 13.5px; font-weight: 700; display: block; }
+      .card-actions { display: flex; gap: 8px; margin-top: 14px; }
+      .mini-btn {
+        flex: 1; min-height: 44px; border-radius: 10px; font-size: 15px; font-weight: 700;
+        border: 1.5px solid var(--line); background: var(--surface-2); color: var(--ink);
+        padding: 6px 8px;
+      }
+      .mini-btn.primary { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
+      @media (prefers-color-scheme: dark) { .mini-btn.primary { color: var(--ink); } }
+      .mini-btn:active { opacity: 0.8; }
+      .card-actions { flex-wrap: wrap; }
+      .card-actions .mini-btn { flex: 1 1 28%; }
+
+      /* ---------- 日ごとの記録 ---------- */
+      .totals-box { display: flex; gap: 10px; }
+      .totals-box > div {
+        flex: 1; background: var(--surface-2); border-radius: 12px;
+        padding: 12px 14px; display: flex; flex-direction: column; gap: 2px;
+      }
+      .totals-box span { font-size: 14px; font-weight: 700; color: var(--ink-soft); }
+      .totals-box b { font-size: 22px; font-weight: 800; }
+      .day-box {
+        background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px;
+        padding: 14px;
+      }
+      .day-box input[type="date"] { margin-bottom: 12px; }
+      .day-count { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+      .day-count > span { font-weight: 800; font-size: 15.5px; white-space: nowrap; }
+      .day-count .stepper { gap: 8px; }
+      .day-count .stepper input { width: 72px; }
+      .day-count .step-btn { width: 46px; height: 46px; }
+      .day-box .mini-btn { width: 100%; min-height: 50px; }
+      .hist-row {
+        background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+        padding: 12px 14px; margin-bottom: 8px;
+      }
+      .hist-date { font-weight: 800; font-size: 16px; }
+      .hist-nums { font-size: 15px; margin-top: 2px; }
+      .hist-cum { font-size: 14px; color: var(--ink-soft); font-weight: 700; margin-top: 2px; }
+      .hist-btns { display: flex; gap: 8px; margin-top: 10px; }
+      .hist-btns .mini-btn { min-height: 40px; font-size: 14px; }
+      .hist-empty { font-size: 14.5px; color: var(--ink-soft); margin: 0; }
+
+      .empty {
+        background: var(--surface); border: 1.5px dashed var(--line); border-radius: 16px;
+        padding: 32px 20px; text-align: center; color: var(--ink-soft);
+      }
+      .empty p { margin: 6px 0; }
+      .empty .big { font-size: 18px; font-weight: 700; color: var(--ink); }
+
+      /* ---------- data section ---------- */
+      .data-box {
+        margin-top: 28px; border-top: 1px solid var(--line); padding-top: 18px;
+      }
+      .data-box h2 { font-size: 15px; margin: 0 0 6px; color: var(--ink-soft); }
+      .data-box p { font-size: 14px; color: var(--ink-soft); margin: 0 0 12px; }
+      .data-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+      .data-btn {
+        min-height: 44px; padding: 8px 16px; border-radius: 10px;
+        border: 1.5px solid var(--line); background: var(--surface);
+        font-size: 15px; font-weight: 600;
+      }
+
+      /* ---------- form view ---------- */
+      .view-head { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+      .back-btn {
+        border: 1.5px solid var(--line); background: var(--surface); border-radius: 10px;
+        min-height: 44px; padding: 6px 14px; font-weight: 700; font-size: 15px;
+      }
+      .view-head h1 { font-size: 21px; margin: 0; }
+      .field { margin-bottom: 20px; }
+      .field label, .field .f-label {
+        display: block; font-weight: 800; font-size: 15.5px; margin-bottom: 8px;
+      }
+      .field label .req { color: var(--accent); font-size: 13px; margin-left: 6px; }
+      .field input[type="text"], .field input[type="date"], .field textarea {
+        width: 100%; border: 1.5px solid var(--line); border-radius: 12px;
+        background: var(--surface); padding: 12px 14px; font-size: 17px; min-height: 52px;
+      }
+      .field textarea { min-height: 96px; resize: vertical; line-height: 1.6; }
+      .field input:focus, .field textarea:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+      .field .hint { font-size: 13.5px; color: var(--ink-soft); margin-top: 6px; }
+      .err { color: var(--danger); font-size: 14.5px; font-weight: 700; margin-top: 6px; display: none; }
+
+      .stepper { display: flex; align-items: center; gap: 12px; }
+      .step-btn {
+        width: 52px; height: 52px; flex: none; border-radius: 12px;
+        border: 1.5px solid var(--line); background: var(--surface);
+        font-size: 24px; font-weight: 800; line-height: 1;
+      }
+      .stepper input {
+        width: 90px; text-align: center; border: 1.5px solid var(--line); border-radius: 12px;
+        background: var(--surface); min-height: 52px; font-size: 20px; font-weight: 800;
+      }
+      .stepper .unit { font-weight: 700; }
+
+      .seg { display: flex; gap: 8px; }
+      .seg button {
+        flex: 1; min-height: 52px; border-radius: 12px; font-weight: 700; font-size: 16px;
+        border: 1.5px solid var(--line); background: var(--surface); color: var(--ink-soft);
+      }
+      .seg button[aria-pressed="true"] {
+        background: var(--gold-soft); border-color: var(--gold); color: var(--gold);
+      }
+
+      .quick-row { display: flex; gap: 8px; margin-bottom: 22px; }
+      .quick-row .mini-btn { min-height: 48px; font-size: 15.5px; }
+
+      .save-btn {
+        width: 100%; min-height: 56px; border: 0; border-radius: 14px;
+        background: var(--accent); color: var(--accent-ink);
+        font-size: 18px; font-weight: 800;
+      }
+      .save-btn:active { opacity: 0.85; }
+      .delete-zone { margin-top: 34px; border-top: 1px solid var(--line); padding-top: 18px; }
+      .delete-btn {
+        width: 100%; min-height: 50px; border-radius: 12px;
+        border: 1.5px solid var(--danger); background: transparent; color: var(--danger);
+        font-weight: 700; font-size: 16px;
+      }
+
+      /* ---------- modal / toast ---------- */
+      .overlay {
+        position: fixed; inset: 0; background: rgba(20, 8, 12, 0.55);
+        display: none; align-items: center; justify-content: center; padding: 20px; z-index: 50;
+      }
+      .overlay.open { display: flex; }
+      .modal {
+        background: var(--surface); border-radius: 18px; padding: 24px 20px;
+        max-width: 420px; width: 100%; box-shadow: var(--shadow);
+      }
+      .modal h2 { font-size: 18px; margin: 0 0 10px; }
+      .modal p { margin: 0 0 20px; font-size: 15.5px; color: var(--ink-soft); white-space: pre-wrap; }
+      .modal-btns { display: flex; gap: 10px; }
+      .modal-btns button { flex: 1; min-height: 50px; border-radius: 12px; font-weight: 800; font-size: 16px; }
+      .modal-cancel { border: 1.5px solid var(--line); background: var(--surface); }
+      .modal-ok { border: 0; background: var(--accent); color: var(--accent-ink); }
+      .modal-ok.danger { background: var(--danger); color: #fff; }
+      @media (prefers-color-scheme: dark) { .modal-ok.danger { color: #241016; } }
+
+      .toast {
+        position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(20px);
+        background: var(--ink); color: var(--bg); border-radius: 999px;
+        padding: 12px 22px; font-size: 15.5px; font-weight: 700;
+        opacity: 0; pointer-events: none; transition: opacity 0.25s, transform 0.25s; z-index: 60;
+        max-width: calc(100vw - 32px); text-align: center;
+      }
+      .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+      @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+
+      <!-- ======== 一覧 ======== -->
+      <section id="view-list">
+        <div class="search-row">
+          <div class="search-box">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.8-3.8"></path></svg>
+            <input id="search" type="search" placeholder="名前・特徴・メモで探す" aria-label="お客様を検索" />
+          </div>
+          <button class="add-btn" id="btn-add" type="button">＋ 追加</button>
+        </div>
+
+        <div class="filter-row" role="group" aria-label="絞り込み">
+          <button class="chip" id="chip-all" type="button" aria-pressed="true">すべて</button>
+          <button class="chip" id="chip-regular" type="button" aria-pressed="false">常連さんだけ</button>
+          <div class="sort-wrap">
+            <label for="sort">並び替え</label>
+            <select id="sort">
+              <option value="recent">最後に来た日が新しい順</option>
+              <option value="points">ポイントが多い順</option>
+              <option value="shots">2ショットが多い順</option>
+              <option value="name">名前順</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="day-summary" id="day-summary" hidden>
+          <p class="ds-title" id="ds-title">今日の合計</p>
+          <div class="ds-rows">
+            <div class="ds-cell"><span>パーティ</span><b id="ds-party">0 P</b><small id="ds-party-count">0回</small></div>
+            <div class="ds-cell"><span>2ショット</span><b id="ds-shot">0 P</b><small id="ds-shot-count">0回</small></div>
+            <div class="ds-cell"><span>全員合計</span><b id="ds-total">0 P</b><small>今日の分</small></div>
+          </div>
+        </div>
+
+        <p class="count-line" id="count-line"></p>
+        <div id="cards"></div>
+
+        <div class="data-box">
+          <h2>データの控え</h2>
+          <p>メモはこのスマホの中だけに保存されます。機種変更や万が一に備えて、ときどき控え（ファイル）を書き出しておくと安心です。</p>
+          <div class="data-btns">
+            <button class="data-btn" id="btn-export" type="button">控えを書き出す</button>
+            <button class="data-btn" id="btn-import" type="button">控えを読み込む</button>
+            <input id="file-import" type="file" accept="application/json,.json" hidden />
+          </div>
+        </div>
+      </section>
+
+      <!-- ======== 追加・編集 ======== -->
+      <section id="view-form" hidden>
+        <div class="view-head">
+          <button class="back-btn" id="btn-back" type="button">← 一覧へ</button>
+          <h1 id="form-title">お客様を追加</h1>
+        </div>
+
+        <div class="quick-row" id="quick-row" hidden>
+          <button class="mini-btn primary" id="btn-today" type="button">今日来たことにする</button>
+          <button class="mini-btn" id="btn-party" type="button">パーティ +1</button>
+          <button class="mini-btn" id="btn-shot" type="button">2ショット +1</button>
+        </div>
+
+        <form id="form" novalidate>
+          <div class="field">
+            <label for="f-name">ハンドル名<span class="req">必須</span></label>
+            <input id="f-name" type="text" autocomplete="off" placeholder="例：たろうさん" />
+            <p class="err" id="err-name">ハンドル名を入れてください</p>
+          </div>
+
+          <div class="field">
+            <span class="f-label" id="lbl-regular">常連さんですか？</span>
+            <div class="seg" role="group" aria-labelledby="lbl-regular">
+              <button type="button" id="seg-regular" aria-pressed="false">★ 常連さん</button>
+              <button type="button" id="seg-normal" aria-pressed="true">まだ違う</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="f-last">最後に来た日</label>
+            <input id="f-last" type="date" />
+            <p class="hint">来た日が分からないときは空欄でも大丈夫です</p>
+          </div>
+
+          <div class="field">
+            <span class="f-label">これまでの合計（トータル）</span>
+            <div class="totals-box">
+              <div><span>パーティ</span><b id="tot-party">0回</b></div>
+              <div><span>2ショット</span><b id="tot-shots">0回</b></div>
+              <div><span>ポイント</span><b id="tot-points">0 P</b></div>
+            </div>
+          </div>
+
+          <div class="field">
+            <span class="f-label">その日の回数を記録する</span>
+            <div class="day-box">
+              <input id="f-vdate" type="date" aria-label="記録する日付" />
+              <div class="day-count">
+                <span>パーティ</span>
+                <div class="stepper">
+                  <button class="step-btn" id="step-party-minus" type="button" aria-label="パーティ回数を1減らす">−</button>
+                  <input id="f-party" type="number" inputmode="numeric" min="0" step="1" value="0" aria-label="その日のパーティ回数" />
+                  <button class="step-btn" id="step-party-plus" type="button" aria-label="パーティ回数を1増やす">＋</button>
+                  <span class="unit">回</span>
+                </div>
+              </div>
+              <div class="day-count">
+                <span>2ショット</span>
+                <div class="stepper">
+                  <button class="step-btn" id="step-minus" type="button" aria-label="2ショット回数を1減らす">−</button>
+                  <input id="f-shots" type="number" inputmode="numeric" min="0" step="1" value="0" aria-label="その日の2ショット回数" />
+                  <button class="step-btn" id="step-plus" type="button" aria-label="2ショット回数を1増やす">＋</button>
+                  <span class="unit">回</span>
+                </div>
+              </div>
+              <div class="day-count pts">
+                <span>パーティのポイント</span>
+                <div class="stepper">
+                  <button class="step-btn" id="step-ppts-minus" type="button" aria-label="パーティのポイントを50減らす">−</button>
+                  <input id="f-party-pts" type="number" inputmode="numeric" min="0" step="1" value="0" aria-label="その日のパーティのポイント" />
+                  <button class="step-btn" id="step-ppts-plus" type="button" aria-label="パーティのポイントを50増やす">＋</button>
+                  <span class="unit">P</span>
+                </div>
+              </div>
+              <div class="day-count pts">
+                <span>2ショットのポイント</span>
+                <div class="stepper">
+                  <button class="step-btn" id="step-spts-minus" type="button" aria-label="2ショットのポイントを50減らす">−</button>
+                  <input id="f-shot-pts" type="number" inputmode="numeric" min="0" step="1" value="0" aria-label="その日の2ショットのポイント" />
+                  <button class="step-btn" id="step-spts-plus" type="button" aria-label="2ショットのポイントを50増やす">＋</button>
+                  <span class="unit">P</span>
+                </div>
+              </div>
+              <p class="day-total-line" id="day-total-line">この日の合計：0 P</p>
+              <button class="mini-btn primary" id="btn-record" type="button">この日の分を記録する</button>
+              <p class="hint">ポイントの＋−ボタンは50Pずつ変わります。数字を直接入れることもできます。同じ日にもう一度記録すると、その日の分に足されます。下の「保存する」を押すと確定します。</p>
+            </div>
+          </div>
+
+          <div class="field">
+            <span class="f-label">日ごとの記録</span>
+            <div id="f-history"></div>
+          </div>
+
+          <div class="field">
+            <label for="f-feature">特徴・好み</label>
+            <textarea id="f-feature" placeholder="例：関西弁／お酒の話が好き／声低めNG など"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="f-memo">前に話したこと・メモ</label>
+            <textarea id="f-memo" placeholder="例：犬を飼っている／来月引っ越し予定／誕生日は3月 など"></textarea>
+          </div>
+
+          <button class="save-btn" type="submit">保存する</button>
+        </form>
+
+        <div class="delete-zone" id="delete-zone" hidden>
+          <button class="delete-btn" id="btn-delete" type="button">このお客様を削除する</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- ======== 確認モーダル ======== -->
+    <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal">
+        <h2 id="modal-title"></h2>
+        <p id="modal-text"></p>
+        <div class="modal-btns">
+          <button class="modal-cancel" id="modal-cancel" type="button">やめる</button>
+          <button class="modal-ok" id="modal-ok" type="button">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status"></div>
+
+    <script>
+      (function () {
+        "use strict";
+        var KEY = "okyakuMemo.v1";
+        var customers = [];
+        var storageOK = true;
+
+        function dateOf(ts) {
+          var d = new Date(ts || Date.now());
+          var m = ("0" + (d.getMonth() + 1)).slice(-2);
+          var day = ("0" + d.getDate()).slice(-2);
+          return d.getFullYear() + "-" + m + "-" + day;
+        }
+        function cleanVisit(v) {
+          if (!v || typeof v.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(v.date)) return null;
+          var p = Math.max(0, parseInt(v.party, 10) || 0);
+          var s = Math.max(0, parseInt(v.shots, 10) || 0);
+          var pp = Math.max(0, parseInt(v.partyPts, 10) || 0);
+          var sp = Math.max(0, parseInt(v.shotPts, 10) || 0);
+          if (p === 0 && s === 0 && pp === 0 && sp === 0) return null;
+          return { date: v.date, party: p, shots: s, partyPts: pp, shotPts: sp };
+        }
+        function normalize(c) {
+          var visits = [];
+          if (Array.isArray(c.visits)) {
+            c.visits.forEach(function (v) { var cv = cleanVisit(v); if (cv) visits.push(cv); });
+          }
+          /* 旧形式（2ショットの合計だけ）からの移行：最後に来た日の分としてまとめて入れる */
+          var legacy = Math.max(0, parseInt(c.shots, 10) || 0);
+          if (legacy > 0 && visits.length === 0) {
+            visits.push({ date: c.lastDate || dateOf(c.createdAt), party: 0, shots: legacy, partyPts: 0, shotPts: 0 });
+          }
+          visits.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+          var merged = [];
+          visits.forEach(function (v) {
+            var last = merged[merged.length - 1];
+            if (last && last.date === v.date) {
+              last.party += v.party; last.shots += v.shots;
+              last.partyPts += v.partyPts; last.shotPts += v.shotPts;
+            }
+            else merged.push(v);
+          });
+          return {
+            id: c.id,
+            name: c.name,
+            regular: !!c.regular,
+            lastDate: typeof c.lastDate === "string" ? c.lastDate : "",
+            visits: merged,
+            feature: typeof c.feature === "string" ? c.feature : "",
+            memo: typeof c.memo === "string" ? c.memo : "",
+            createdAt: c.createdAt || Date.now(),
+            updatedAt: c.updatedAt || Date.now()
+          };
+        }
+        function totals(c) {
+          var p = 0, s = 0, pp = 0, sp = 0;
+          (c.visits || []).forEach(function (v) {
+            p += v.party || 0; s += v.shots || 0;
+            pp += v.partyPts || 0; sp += v.shotPts || 0;
+          });
+          return { party: p, shots: s, partyPts: pp, shotPts: sp, points: pp + sp };
+        }
+        function visitPoints(v) { return (v.partyPts || 0) + (v.shotPts || 0); }
+        function dayTotals(date) {
+          var p = 0, s = 0, pp = 0, sp = 0;
+          customers.forEach(function (c) {
+            (c.visits || []).forEach(function (v) {
+              if (v.date !== date) return;
+              p += v.party || 0; s += v.shots || 0;
+              pp += v.partyPts || 0; sp += v.shotPts || 0;
+            });
+          });
+          return { party: p, shots: s, partyPts: pp, shotPts: sp, points: pp + sp };
+        }
+        function addTodayVisit(c, kind) {
+          var t = todayStr();
+          c.visits = c.visits || [];
+          var found = null;
+          c.visits.forEach(function (v) { if (v.date === t) found = v; });
+          if (!found) { found = { date: t, party: 0, shots: 0, partyPts: 0, shotPts: 0 }; c.visits.push(found); }
+          found[kind] = (found[kind] || 0) + 1;
+          c.visits.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+          c.lastDate = t;
+          c.updatedAt = Date.now();
+        }
+        function load() {
+          try {
+            var raw = window.localStorage.getItem(KEY);
+            if (raw) {
+              var parsed = JSON.parse(raw);
+              if (Array.isArray(parsed)) {
+                customers = parsed.filter(function (c) { return c && typeof c.name === "string"; }).map(normalize);
+                save();
+              }
+            }
+          } catch (e) { storageOK = false; }
+        }
+        function save() {
+          try {
+            window.localStorage.setItem(KEY, JSON.stringify(customers));
+          } catch (e) { storageOK = false; }
+        }
+
+        /* ---------- helpers ---------- */
+        function $(id) { return document.getElementById(id); }
+        function todayStr() {
+          var d = new Date();
+          var m = ("0" + (d.getMonth() + 1)).slice(-2);
+          var day = ("0" + d.getDate()).slice(-2);
+          return d.getFullYear() + "-" + m + "-" + day;
+        }
+        function fmtDate(s) {
+          if (!s) return "未記録";
+          var p = s.split("-");
+          if (p.length !== 3) return s;
+          var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+          var wd = ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
+          return Number(p[1]) + "月" + Number(p[2]) + "日（" + wd + "）";
+        }
+        function relLabel(s) {
+          if (!s) return "";
+          var t = new Date(todayStr() + "T00:00:00");
+          var d = new Date(s + "T00:00:00");
+          var diff = Math.round((t - d) / 86400000);
+          if (diff === 0) return "今日";
+          if (diff === 1) return "昨日";
+          if (diff > 1 && diff < 30) return diff + "日前";
+          if (diff >= 30 && diff < 365) return Math.floor(diff / 30) + "か月ほど前";
+          if (diff >= 365) return "1年以上前";
+          return "";
+        }
+        var toastTimer = null;
+        function toast(msg) {
+          var el = $("toast");
+          el.textContent = msg;
+          el.classList.add("show");
+          if (toastTimer) clearTimeout(toastTimer);
+          toastTimer = setTimeout(function () { el.classList.remove("show"); }, 2400);
+        }
+
+        /* ---------- modal ---------- */
+        var modalCb = null;
+        function showModal(title, text, okLabel, danger, cb) {
+          $("modal-title").textContent = title;
+          $("modal-text").textContent = text;
+          var ok = $("modal-ok");
+          ok.textContent = okLabel;
+          ok.className = "modal-ok" + (danger ? " danger" : "");
+          modalCb = cb;
+          $("overlay").classList.add("open");
+        }
+        function hideModal() { $("overlay").classList.remove("open"); modalCb = null; }
+        $("modal-cancel").addEventListener("click", hideModal);
+        $("modal-ok").addEventListener("click", function () {
+          var cb = modalCb; hideModal(); if (cb) cb();
+        });
+        $("overlay").addEventListener("click", function (e) {
+          if (e.target === $("overlay")) hideModal();
+        });
+
+        /* ---------- list rendering ---------- */
+        var filterRegular = false;
+        function filtered() {
+          var q = $("search").value.trim().toLowerCase();
+          var list = customers.filter(function (c) {
+            if (filterRegular && !c.regular) return false;
+            if (!q) return true;
+            return (c.name || "").toLowerCase().indexOf(q) >= 0 ||
+                   (c.feature || "").toLowerCase().indexOf(q) >= 0 ||
+                   (c.memo || "").toLowerCase().indexOf(q) >= 0;
+          });
+          var mode = $("sort").value;
+          list.sort(function (a, b) {
+            if (mode === "name") return (a.name || "").localeCompare(b.name || "", "ja");
+            if (mode === "points") return totals(b).points - totals(a).points;
+            if (mode === "shots") return totals(b).shots - totals(a).shots;
+            var da = a.lastDate || "", db = b.lastDate || "";
+            if (da !== db) return db < da ? -1 : 1;
+            return (b.updatedAt || 0) - (a.updatedAt || 0);
+          });
+          return list;
+        }
+
+        function makeEl(tag, cls, text) {
+          var el = document.createElement(tag);
+          if (cls) el.className = cls;
+          if (text != null) el.textContent = text;
+          return el;
+        }
+
+        function render() {
+          var box = $("cards");
+          box.innerHTML = "";
+          var list = filtered();
+          var total = customers.length;
+          var dt = dayTotals(todayStr());
+          var ds = $("day-summary");
+          if (total > 0) {
+            ds.hidden = false;
+            $("ds-title").textContent = "今日（" + fmtDate(todayStr()) + "）の合計";
+            $("ds-party").textContent = dt.partyPts.toLocaleString("ja-JP") + " P";
+            $("ds-party-count").textContent = dt.party + "回";
+            $("ds-shot").textContent = dt.shotPts.toLocaleString("ja-JP") + " P";
+            $("ds-shot-count").textContent = dt.shots + "回";
+            $("ds-total").textContent = dt.points.toLocaleString("ja-JP") + " P";
+          } else {
+            ds.hidden = true;
+          }
+          var regCount = customers.filter(function (c) { return c.regular; }).length;
+          if (total === 0) {
+            $("count-line").textContent = "";
+            var empty = makeEl("div", "empty");
+            empty.appendChild(makeEl("p", "big", "まだお客様が登録されていません"));
+            empty.appendChild(makeEl("p", null, "右上の「＋ 追加」から、最初のお客様を登録してみてください。"));
+            box.appendChild(empty);
+            return;
+          }
+          $("count-line").textContent = "全" + total + "人（常連さん " + regCount + "人）" +
+            (list.length !== total ? "／表示 " + list.length + "人" : "");
+
+          if (list.length === 0) {
+            var none = makeEl("div", "empty");
+            none.appendChild(makeEl("p", "big", "見つかりませんでした"));
+            none.appendChild(makeEl("p", null, "検索のことばや絞り込みを変えてみてください。"));
+            box.appendChild(none);
+            return;
+          }
+
+          list.forEach(function (c) {
+            var card = makeEl("div", "card");
+
+            var head = makeEl("div", "card-head");
+            head.appendChild(makeEl("p", "card-name", c.name));
+            if (c.regular) head.appendChild(makeEl("span", "badge-regular", "★ 常連さん"));
+            card.appendChild(head);
+
+            var meta = makeEl("div", "card-meta");
+            var m1 = makeEl("span");
+            m1.appendChild(document.createTextNode("最後に来た日："));
+            var b1 = makeEl("b", null, fmtDate(c.lastDate));
+            m1.appendChild(b1);
+            var rel = relLabel(c.lastDate);
+            if (rel) m1.appendChild(document.createTextNode("（" + rel + "）"));
+            meta.appendChild(m1);
+            var tt = totals(c);
+            var m2 = makeEl("span");
+            m2.appendChild(document.createTextNode("パーティ累計："));
+            m2.appendChild(makeEl("b", null, tt.party + "回"));
+            meta.appendChild(m2);
+            var m3 = makeEl("span");
+            m3.appendChild(document.createTextNode("2ショット累計："));
+            m3.appendChild(makeEl("b", null, tt.shots + "回"));
+            meta.appendChild(m3);
+            var m4 = makeEl("span");
+            m4.appendChild(document.createTextNode("累計ポイント："));
+            m4.appendChild(makeEl("b", null, tt.points.toLocaleString("ja-JP") + " P"));
+            meta.appendChild(m4);
+            card.appendChild(meta);
+
+            var todayVisit = null;
+            (c.visits || []).forEach(function (v) { if (v.date === todayStr()) todayVisit = v; });
+            if (todayVisit) {
+              var tl = makeEl("div", "card-today");
+              tl.appendChild(document.createTextNode("今日：パーティ " + todayVisit.party + "回・" + (todayVisit.partyPts || 0).toLocaleString("ja-JP") + "P ／ 2ショット " + todayVisit.shots + "回・" + (todayVisit.shotPts || 0).toLocaleString("ja-JP") + "P ／ 合計 "));
+              tl.appendChild(makeEl("b", null, visitPoints(todayVisit).toLocaleString("ja-JP") + " P"));
+              card.appendChild(tl);
+            }
+
+            if (c.feature) {
+              var t1 = makeEl("p", "card-text");
+              t1.appendChild(makeEl("span", "lbl", "特徴・好み"));
+              t1.appendChild(document.createTextNode(c.feature));
+              card.appendChild(t1);
+            }
+            if (c.memo) {
+              var t2 = makeEl("p", "card-text");
+              t2.appendChild(makeEl("span", "lbl", "前に話したこと・メモ"));
+              t2.appendChild(document.createTextNode(c.memo));
+              card.appendChild(t2);
+            }
+
+            var actions = makeEl("div", "card-actions");
+            var bToday = makeEl("button", "mini-btn primary", "今日来た");
+            bToday.type = "button";
+            bToday.addEventListener("click", function () {
+              c.lastDate = todayStr(); c.updatedAt = Date.now(); save(); render();
+              toast(c.name + "さん：最後に来た日を今日にしました");
+            });
+            var bParty = makeEl("button", "mini-btn", "パーティ +1");
+            bParty.type = "button";
+            bParty.addEventListener("click", function () {
+              addTodayVisit(c, "party"); save(); render();
+              toast(c.name + "さん：今日のパーティを記録しました（累計 " + totals(c).party + "回）");
+            });
+            var bShot = makeEl("button", "mini-btn", "2ショット +1");
+            bShot.type = "button";
+            bShot.addEventListener("click", function () {
+              addTodayVisit(c, "shots"); save(); render();
+              toast(c.name + "さん：今日の2ショットを記録しました（累計 " + totals(c).shots + "回）");
+            });
+            var bEdit = makeEl("button", "mini-btn", "開く・直す");
+            bEdit.type = "button";
+            bEdit.addEventListener("click", function () { openForm(c.id); });
+            actions.appendChild(bToday);
+            actions.appendChild(bParty);
+            actions.appendChild(bShot);
+            actions.appendChild(bEdit);
+            card.appendChild(actions);
+
+            box.appendChild(card);
+          });
+        }
+
+        /* ---------- form ---------- */
+        var editingId = null;
+        var formRegular = false;
+
+        function setRegular(v) {
+          formRegular = v;
+          $("seg-regular").setAttribute("aria-pressed", v ? "true" : "false");
+          $("seg-normal").setAttribute("aria-pressed", v ? "false" : "true");
+        }
+        $("seg-regular").addEventListener("click", function () { setRegular(true); });
+        $("seg-normal").addEventListener("click", function () { setRegular(false); });
+
+        var formVisits = [];
+
+        function numVal(id) {
+          var n = parseInt($(id).value, 10);
+          if (isNaN(n) || n < 0) n = 0;
+          return n;
+        }
+        function bindStepper(minusId, plusId, inputId, step) {
+          step = step || 1;
+          $(minusId).addEventListener("click", function () { $(inputId).value = Math.max(0, numVal(inputId) - step); updateDayTotal(); });
+          $(plusId).addEventListener("click", function () { $(inputId).value = numVal(inputId) + step; updateDayTotal(); });
+        }
+        bindStepper("step-minus", "step-plus", "f-shots");
+        bindStepper("step-party-minus", "step-party-plus", "f-party");
+        bindStepper("step-ppts-minus", "step-ppts-plus", "f-party-pts", 50);
+        bindStepper("step-spts-minus", "step-spts-plus", "f-shot-pts", 50);
+
+        function updateDayTotal() {
+          var pp = numVal("f-party-pts"), sp = numVal("f-shot-pts");
+          $("day-total-line").textContent = "この日の合計：パーティ " + pp.toLocaleString("ja-JP") + "P ＋ 2ショット " + sp.toLocaleString("ja-JP") + "P ＝ " + (pp + sp).toLocaleString("ja-JP") + " P";
+        }
+        ["f-party-pts", "f-shot-pts"].forEach(function (id) {
+          $(id).addEventListener("input", updateDayTotal);
+        });
+
+        function formTotals() {
+          var p = 0, s = 0, pp = 0, sp = 0;
+          formVisits.forEach(function (v) {
+            p += v.party; s += v.shots;
+            pp += v.partyPts || 0; sp += v.shotPts || 0;
+          });
+          return { party: p, shots: s, partyPts: pp, shotPts: sp, points: pp + sp };
+        }
+        function stageVisit(date, party, shots, partyPts, shotPts) {
+          partyPts = partyPts || 0; shotPts = shotPts || 0;
+          var found = null;
+          formVisits.forEach(function (v) { if (v.date === date) found = v; });
+          if (found) {
+            found.party += party; found.shots += shots;
+            found.partyPts = (found.partyPts || 0) + partyPts;
+            found.shotPts = (found.shotPts || 0) + shotPts;
+          }
+          else formVisits.push({ date: date, party: party, shots: shots, partyPts: partyPts, shotPts: shotPts });
+          formVisits = formVisits.filter(function (v) {
+            return v.party > 0 || v.shots > 0 || (v.partyPts || 0) > 0 || (v.shotPts || 0) > 0;
+          });
+          formVisits.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+        }
+        function renderFormHistory() {
+          var box = $("f-history");
+          box.innerHTML = "";
+          var ft = formTotals();
+          $("tot-party").textContent = ft.party + "回";
+          $("tot-shots").textContent = ft.shots + "回";
+          $("tot-points").textContent = ft.points.toLocaleString("ja-JP") + " P";
+          if (formVisits.length === 0) {
+            box.appendChild(makeEl("p", "hist-empty", "まだ記録がありません。上の「この日の分を記録する」から追加できます。"));
+            return;
+          }
+          var cumP = 0, cumS = 0, cumPts = 0, rows = [];
+          formVisits.forEach(function (v) {
+            cumP += v.party; cumS += v.shots; cumPts += visitPoints(v);
+            rows.push({ v: v, cumP: cumP, cumS: cumS, cumPts: cumPts });
+          });
+          rows.reverse().forEach(function (r) {
+            var row = makeEl("div", "hist-row");
+            var d = makeEl("div", "hist-date", fmtDate(r.v.date));
+            var rel = relLabel(r.v.date);
+            if (rel) d.appendChild(document.createTextNode("（" + rel + "）"));
+            row.appendChild(d);
+            row.appendChild(makeEl("div", "hist-nums", "パーティ " + r.v.party + "回 ・ " + (r.v.partyPts || 0).toLocaleString("ja-JP") + "P"));
+            row.appendChild(makeEl("div", "hist-nums", "2ショット " + r.v.shots + "回 ・ " + (r.v.shotPts || 0).toLocaleString("ja-JP") + "P"));
+            row.appendChild(makeEl("div", "hist-nums", "この日の合計：" + visitPoints(r.v).toLocaleString("ja-JP") + " P"));
+            row.appendChild(makeEl("div", "hist-cum", "この日までの合計：パーティ " + r.cumP + "回 ・ 2ショット " + r.cumS + "回 ・ " + r.cumPts.toLocaleString("ja-JP") + " P"));
+            var btns = makeEl("div", "hist-btns");
+            var bEditDay = makeEl("button", "mini-btn", "この日を直す");
+            bEditDay.type = "button";
+            bEditDay.addEventListener("click", function () {
+              $("f-vdate").value = r.v.date;
+              $("f-party").value = r.v.party;
+              $("f-shots").value = r.v.shots;
+              $("f-party-pts").value = r.v.partyPts || 0;
+              $("f-shot-pts").value = r.v.shotPts || 0;
+              formVisits = formVisits.filter(function (v) { return v.date !== r.v.date; });
+              renderFormHistory();
+              updateDayTotal();
+              toast("上の欄に移しました。直してから「この日の分を記録する」を押してください");
+            });
+            var bDelDay = makeEl("button", "mini-btn", "この日を消す");
+            bDelDay.type = "button";
+            bDelDay.addEventListener("click", function () {
+              formVisits = formVisits.filter(function (v) { return v.date !== r.v.date; });
+              renderFormHistory();
+            });
+            btns.appendChild(bEditDay);
+            btns.appendChild(bDelDay);
+            row.appendChild(btns);
+            box.appendChild(row);
+          });
+        }
+        $("btn-record").addEventListener("click", function () {
+          var date = $("f-vdate").value;
+          var p = numVal("f-party"), s = numVal("f-shots");
+          var pp = numVal("f-party-pts"), sp = numVal("f-shot-pts");
+          if (!date) { toast("日付を選んでください"); return; }
+          if (p === 0 && s === 0 && pp === 0 && sp === 0) { toast("回数かポイントを入れてください"); return; }
+          stageVisit(date, p, s, pp, sp);
+          $("f-party").value = 0;
+          $("f-shots").value = 0;
+          $("f-party-pts").value = 0;
+          $("f-shot-pts").value = 0;
+          updateDayTotal();
+          renderFormHistory();
+          toast(fmtDate(date) + "の分を記録しました（保存で確定します）");
+        });
+
+        function showView(form) {
+          $("view-list").hidden = form;
+          $("view-form").hidden = !form;
+          window.scrollTo(0, 0);
+        }
+
+        function openForm(id) {
+          editingId = id || null;
+          $("err-name").style.display = "none";
+          if (id) {
+            var c = null;
+            for (var i = 0; i < customers.length; i++) if (customers[i].id === id) c = customers[i];
+            if (!c) return;
+            $("form-title").textContent = "お客様のメモ";
+            $("f-name").value = c.name || "";
+            setRegular(!!c.regular);
+            $("f-last").value = c.lastDate || "";
+            formVisits = (c.visits || []).map(function (v) {
+              return { date: v.date, party: v.party, shots: v.shots, partyPts: v.partyPts || 0, shotPts: v.shotPts || 0 };
+            });
+            $("f-vdate").value = todayStr();
+            $("f-party").value = 0;
+            $("f-shots").value = 0;
+            $("f-party-pts").value = 0;
+            $("f-shot-pts").value = 0;
+            updateDayTotal();
+            renderFormHistory();
+            $("f-feature").value = c.feature || "";
+            $("f-memo").value = c.memo || "";
+            $("quick-row").hidden = false;
+            $("delete-zone").hidden = false;
+          } else {
+            $("form-title").textContent = "お客様を追加";
+            $("f-name").value = "";
+            setRegular(false);
+            $("f-last").value = todayStr();
+            formVisits = [];
+            $("f-vdate").value = todayStr();
+            $("f-party").value = 0;
+            $("f-shots").value = 0;
+            $("f-party-pts").value = 0;
+            $("f-shot-pts").value = 0;
+            updateDayTotal();
+            renderFormHistory();
+            $("f-feature").value = "";
+            $("f-memo").value = "";
+            $("quick-row").hidden = true;
+            $("delete-zone").hidden = true;
+          }
+          showView(true);
+        }
+
+        $("btn-add").addEventListener("click", function () { openForm(null); });
+        $("btn-back").addEventListener("click", function () { showView(false); render(); });
+
+        $("btn-today").addEventListener("click", function () {
+          $("f-last").value = todayStr();
+          toast("最後に来た日を今日にしました（保存で確定します）");
+        });
+        $("btn-party").addEventListener("click", function () {
+          stageVisit(todayStr(), 1, 0);
+          $("f-last").value = todayStr();
+          renderFormHistory();
+          toast("今日のパーティ +1 を記録しました（保存で確定します）");
+        });
+        $("btn-shot").addEventListener("click", function () {
+          stageVisit(todayStr(), 0, 1);
+          $("f-last").value = todayStr();
+          renderFormHistory();
+          toast("今日の2ショット +1 を記録しました（保存で確定します）");
+        });
+
+        $("form").addEventListener("submit", function (e) {
+          e.preventDefault();
+          var name = $("f-name").value.trim();
+          if (!name) {
+            $("err-name").style.display = "block";
+            $("f-name").focus();
+            return;
+          }
+          $("err-name").style.display = "none";
+          var lastDate = $("f-last").value || "";
+          formVisits.forEach(function (v) { if (v.date > lastDate) lastDate = v.date; });
+          var data = {
+            name: name,
+            regular: formRegular,
+            lastDate: lastDate,
+            visits: formVisits.map(function (v) {
+              return { date: v.date, party: v.party, shots: v.shots, partyPts: v.partyPts || 0, shotPts: v.shotPts || 0 };
+            }),
+            feature: $("f-feature").value.trim(),
+            memo: $("f-memo").value.trim(),
+            updatedAt: Date.now()
+          };
+          if (editingId) {
+            for (var i = 0; i < customers.length; i++) {
+              if (customers[i].id === editingId) {
+                data.id = editingId;
+                data.createdAt = customers[i].createdAt;
+                customers[i] = data;
+              }
+            }
+            toast(name + "さんのメモを保存しました");
+          } else {
+            data.id = "c" + Date.now() + Math.floor(Math.random() * 10000);
+            data.createdAt = Date.now();
+            customers.push(data);
+            toast(name + "さんを追加しました");
+          }
+          save();
+          showView(false);
+          render();
+          if (!storageOK) toast("この開き方では保存できない場合があります");
+        });
+
+        $("btn-delete").addEventListener("click", function () {
+          var name = $("f-name").value.trim() || "このお客様";
+          showModal("削除しますか？", "「" + name + "」さんのメモを削除します。元に戻せません。", "削除する", true, function () {
+            customers = customers.filter(function (c) { return c.id !== editingId; });
+            save();
+            showView(false);
+            render();
+            toast("削除しました");
+          });
+        });
+
+        /* ---------- search / filter / sort ---------- */
+        $("search").addEventListener("input", render);
+        $("sort").addEventListener("change", render);
+        $("chip-all").addEventListener("click", function () {
+          filterRegular = false;
+          $("chip-all").setAttribute("aria-pressed", "true");
+          $("chip-regular").setAttribute("aria-pressed", "false");
+          render();
+        });
+        $("chip-regular").addEventListener("click", function () {
+          filterRegular = true;
+          $("chip-all").setAttribute("aria-pressed", "false");
+          $("chip-regular").setAttribute("aria-pressed", "true");
+          render();
+        });
+
+        /* ---------- export / import ---------- */
+        $("btn-export").addEventListener("click", function () {
+          if (customers.length === 0) { toast("まだメモがありません"); return; }
+          var blob = new Blob([JSON.stringify(customers, null, 2)], { type: "application/json" });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement("a");
+          var d = new Date();
+          a.href = url;
+          a.download = "お客様メモ控え_" + d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2) + ".json";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+          toast("控えを書き出しました");
+        });
+
+        $("btn-import").addEventListener("click", function () { $("file-import").click(); });
+        $("file-import").addEventListener("change", function () {
+          var file = $("file-import").files[0];
+          $("file-import").value = "";
+          if (!file) return;
+          var reader = new FileReader();
+          reader.onload = function () {
+            var parsed;
+            try { parsed = JSON.parse(reader.result); } catch (e) { parsed = null; }
+            if (!Array.isArray(parsed)) { toast("読み込めませんでした（ファイルが違います）"); return; }
+            var clean = parsed.filter(function (c) { return c && typeof c.name === "string" && c.name.trim(); })
+              .map(function (c, i) {
+                var n = normalize(c);
+                if (!n.id) n.id = "c" + Date.now() + i;
+                return n;
+              });
+            if (clean.length === 0) { toast("読み込めるお客様がいませんでした"); return; }
+            showModal("控えを読み込みますか？",
+              "今のメモ " + customers.length + "人分を、控えの " + clean.length + "人分で置きかえます。",
+              "読み込む", false, function () {
+                customers = clean;
+                save(); render();
+                toast("読み込みました（" + clean.length + "人）");
+              });
+          };
+          reader.readAsText(file);
+        });
+
+        /* ---------- init ---------- */
+        load();
+        render();
+      })();
+    </script>
+  </body>
+</html>
